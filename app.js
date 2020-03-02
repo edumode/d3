@@ -2,12 +2,12 @@ var quotes = [
   {
     quote: "I see dead people.",
     movie: "The Sixth Sense",
-    year: 1999,
+    year: 1800,
     rating: "PG-13"
   }, {
     quote: "May the force be with you.",
     movie: "Star Wars: Episode IV - A New Hope",
-    year: 1977,
+    year: 1850,
     rating: "PG"
   }, {
     quote: "You've got to ask yourself one question: 'Do I feel lucky?' Well, do ya, punk?",
@@ -17,24 +17,69 @@ var quotes = [
   }, {
     quote: "You had me at 'hello.'",
     movie: "Jerry Maguire",
-    year: 1996,
+    year: 1200,
     rating: "R"
   }, {
     quote: "Just keep swimming. Just keep swimming. Swimming, swimming, swiming.",
     movie: "Finding Nemo",
-    year: 2003,
+    year: 2800,
     rating: "G"
   },
   {
     quote: "It's necessary",
     movie: "Interstellar",
-    year: 2014,
+    year: 1700,
+    rating: "PG"
+  },
+  {
+    quote: "It's necessary",
+    movie: "Interstellar",
+    year: 1400,
     rating: "PG"
   }
 ];
 
+var width = 500
+var height = 300
+var barPadding = 10
+var numBars = quotes.length
+var barWidth = width / numBars - barPadding
 
-var ratesData = quotes.map(rates => 
+var maxYear = d3.max(quotes, d => d.year)
+var minYear = d3.min(quotes, d => d.year)
+
+var yScale = d3.scaleLinear()
+                .domain([0, maxYear])//data
+                .range([height, 0])//box size
+
+var svg = d3.select("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .style("padding-left","50px")
+
+var yAxis = d3.axisRight(yScale)
+
+svg
+  .append("g")
+  .style("padding-left","-10px")
+  .call(yAxis)
+
+svg
+  .selectAll("rect")
+  .data(quotes)
+    .enter()
+    .append("rect")
+      .attr("x", (d,i) => (barPadding + barWidth) * i)
+      .attr("y", (d) => yScale(d.year))
+      .attr("width", barWidth)
+      .attr("height", d => height - yScale(d.year))
+      .attr("fill", "green")
+  
+
+  
+
+
+/*var ratesData = quotes.map(rates => 
   "<option value='"+ rates.rating +"'>"+ rates.rating + "</options>"
   )
 
@@ -97,3 +142,6 @@ enterData(quotes)
     enterData(newData)
   }
 })
+
+*/
+
