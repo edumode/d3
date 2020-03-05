@@ -1,76 +1,53 @@
-var width = 800
-var height = 300 + 30
-var paddingBar = 10
+// set the dimensions and margins of the graph
+var margin = {top: 10, right: 30, bottom: 30, left: 40},
+    width = 460 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
 
-var toFind = "FirstAttempt"
+// append the svg object to the body of the page
+var svg = d3.select("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
 
-var firstAttemptDates = dates.map(d => d[toFind])
+// get the data
+d3.csv("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/1_OneNum.csv", function(data) {
 
-console.log(firstAttemptDates)
-var uniquefirstAttemptDates = [...new Set(firstAttemptDates)]
+  // X axis: scale and draw:
+  var x = d3.scaleLinear()
+      .domain([0, 1000])     // can use this instead of 1000 to have the max of data: d3.max(data, function(d) { return +d.price })
+      .range([0, width]);
+  svg.append("g")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x));
 
-var widthBar = width / uniquefirstAttemptDates.length - paddingBar - 10
+  // set the parameters for the histogram
+  var histogram = d3.histogram()
+      .value(function(d) { return d.price; })   // I need to give the vector of value
+      .domain(x.domain())  // then the domain of the graphic
+      .thresholds(x.ticks(70)); // then the numbers of bins
 
-var dateMax = d3.max(dates, d => d.FirstAttempt)
-var dateMin = d3.min(dates, d => d.FirstAttempt)
+  // And apply this function to data to get the bins
+  var bins = histogram(data);
+  console.log(bins)
 
-var nested_data = d3.nest()
-.key(function(d) { return  d[toFind]; })
-.rollup(function(leaves) { return leaves.length; })
-.entries(dates)
+  // Y axis: scale and draw:
+  var y = d3.scaleLinear()
+      .range([height, 0]);
+      y.domain([0, d3.max(bins, function(d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
+  svg.append("g")
+      .call(d3.axisLeft(y));
 
-var quantityMax = d3.max(nested_data, d => d.value)
-var quantityMin = d3.min(nested_data, d => d.value)
+  // append the bar rectangles to the svg element
+  svg.selectAll("rect")
+      .data(bins)
+      .enter()
+      .append("rect")
+        .attr("x", 1)
+        .attr("transform", function(d) { return "translate(" + x(d.x0) + "," + y(d.length) + ")"; })
+        .attr("width", function(d) { return x(d.x1) - x(d.x0) -1 ; })
+        .attr("height", function(d) { return height - y(d.length); })
+        .style("fill", "#69b3a2")
 
-var yScale = d3.scaleLinear()
-            .domain([quantityMax, quantityMin])
-            .range([height, 0])
-
-var yScaleAxis = d3.scaleLinear()
-                .domain([quantityMin, quantityMax])
-                .range([height - 30, 0])
-
-var datesAxis = nested_data.map(d => d.key)
-
-var toDate = nested_data.map(d => {
-  var dateNumber = Number(d.key)
-  var convertExceltoJS = (dateNumber - (25567 + 1))*86400*1000 
-  var date = new Date(convertExceltoJS)
-  var dateString = date.toString()
-
-  return  moment(dateString).format("MMM DD YYYY");   
-})
-
-bottomScaleAxis = d3.scaleBand()
-                      .domain(toDate)
-                      .range([0, width])
-
-
-var svgDates = d3.select("svg")
-  .attr("width", width)
-  .attr("height", height)
-
-
-var yAxis = d3.axisLeft(yScaleAxis)
-
-svgDates.append("g")
-        .style("transform","translate(20px,2px)")
-        .call(yAxis)
-
-var bottomAxis = d3.axisBottom(bottomScaleAxis)
-
-svgDates.append("g")
-        .style("transform","translate(50px,0)")
-        .selectAll("rect")
-        .data(uniquefirstAttemptDates)
-        .enter()
-          .append('rect')
-          .attr("width", widthBar)
-          .attr("height", (d,i) => yScale(nested_data[i].value)  )
-          .attr("y", (d,i) => height - yScale(nested_data[i].value) - 30)
-          .attr("x", (d,i) => (paddingBar + widthBar) * i)
-          .attr("fill","#996666")
-
-svgDates.append("g")
-        .style("transform","translate(20px,300px)")
-        .call(bottomAxis)
+});
